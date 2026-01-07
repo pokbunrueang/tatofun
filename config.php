@@ -1,13 +1,12 @@
-<?php //โครงสร้าง php 
+<?php
+$host = "localhost";
+$user = "root"; 
+$pass = "";
+$db   = "db_tatofun"; // ชื่อ Database ตามใน phpMyAdmin
 
-$con=new pdo( 'mysql:host=localhost;dbname=db_pytshop;charset=utf8mb4','','' );
-date_default_timezone_get("asia/bangkok");
+$conn = mysqli_connect($host, $user, $pass, $db);
 
-$date=date("Y-m-d-H:i:s");
-
-$insert='insert into db_pytshop';
-$select= 'select*from db_physhop';
-$update= 'update db_pytshop';
-$delet= 'delet from db_pytshop';
-
+if (!$conn) {
+    die("เชื่อมต่อล้มเหลว: " . mysqli_connect_error());
+}
 ?>
