@@ -2,4 +2,4 @@
 วิธีเซฟ git 
 git add .	เตรียมไฟล์เพื่อรอเซฟ
 git commit -m "..."	เซฟการเปลี่ยนแปลงลงในเครื่อง
-git push	ส่งงานที่เซฟแล้วขึ้น Server
+git push origin main	ส่งงานที่เซฟแล้วขึ้น Server

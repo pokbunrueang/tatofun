@@ -151,7 +151,7 @@ $admin_name = isset($_SESSION['fullname']) ? $_SESSION['fullname'] : 'ผู้�
                         <div class="icon-circle bg-dark bg-opacity-10 text-dark">
                             <i class="bi bi-graph-up-arrow"></i>
                         </div>
-                        <h4 class="fw-bold text-dark">สรุปยอดขาย</h4>
+                        <h4 class="fw-bold text-dark">สรุปรายได้</h4>
                         <p class="text-muted small px-2">ดูสถิติรายได้รายวัน และยอดขายสะสม</p>
                         <div class="mt-auto">
                             <hr class="my-4 opacity-25">

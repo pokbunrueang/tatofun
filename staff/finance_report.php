@@ -1,8 +1,8 @@
 <?php
 session_start();
-include '../config.php'; 
+include '../config.php';
 
-// 1. ดึงข้อมูลสรุปจาก tb_finance
+// ดึงข้อมูลสรุปจาก tb_finance ตามโครงสร้างจริงในฐานข้อมูล
 $sql_income = "SELECT SUM(fin_amount) as total FROM tb_finance WHERE fin_type = 'income'";
 $res_income = mysqli_query($conn, $sql_income);
 $income = mysqli_fetch_assoc($res_income)['total'] ?? 0;
@@ -18,15 +18,16 @@ $profit = $income - $expense;
 <html lang="th">
 <head>
     <meta charset="utf-8">
-    <title>สรุปรายได้แอดมิน - TatoFun</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>สรุปยอดขาย - TatoFun</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background-color: #fffdf0; font-family: 'Kanit', sans-serif; }
+        body { background-color: #f8f9fa; font-family: 'Kanit', sans-serif; }
         .card { border: none; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .stat-card { border: none; border-radius: 20px; transition: 0.3s; color: white; position: relative; overflow: hidden; }
+        .stat-card { border: none; border-radius: 20px; transition: 0.3s; color: white; }
         .stat-card:hover { transform: translateY(-5px); }
         .bg-gradient-green { background: linear-gradient(135deg, #28a745, #20c997); }
         .bg-gradient-red { background: linear-gradient(135deg, #dc3545, #f86d7d); }
@@ -37,12 +38,14 @@ $profit = $income - $expense;
 
 <div class="container-fluid bg-white py-3 shadow-sm mb-4">
     <div class="container d-flex justify-content-between align-items-center">
-        <a href="index_ad.php" class="btn btn-light rounded-pill px-4 shadow-sm">
-            <i class="bi bi-arrow-left-circle me-1"></i> กลับหน้าจัดการ
+        <a href="index_st.php" class="btn btn-light rounded-pill px-3 shadow-sm border-0" style="background-color: #f8f9fa;">
+            <i class="bi bi-arrow-left-circle me-1"></i> กลับหน้าหลัก
         </a>
-        <h4 class="fw-bold mb-0 text-dark">รายงานสรุปยอดขาย (Admin)</h4>
-        <button class="btn btn-outline-dark rounded-pill px-3" onclick="window.print()">
-            <i class="bi bi-printer me-1"></i> พิมพ์รายงาน
+        
+        <h4 class="fw-bold mb-0" style="color: #ffc107;">สรุปรายงานการเงิน</h4>
+        
+        <button class="btn btn-outline-success rounded-pill px-3 border-0" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i> พิมพ์
         </button>
     </div>
 </div>
@@ -51,14 +54,14 @@ $profit = $income - $expense;
     <div class="row g-4 mb-5">
         <div class="col-md-4">
             <div class="card stat-card bg-gradient-green p-4 h-100">
-                <small class="opacity-75">รายรับสะสม</small>
+                <small class="opacity-75">รายรับทั้งหมด</small>
                 <h2 class="fw-bold mb-0">฿ <?= number_format($income, 2) ?></h2>
                 <i class="bi bi-graph-up-arrow position-absolute end-0 bottom-0 m-3 opacity-25 fs-1"></i>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card stat-card bg-gradient-red p-4 h-100">
-                <small class="opacity-75">รายจ่ายสะสม</small>
+                <small class="opacity-75">รายจ่ายทั้งหมด</small>
                 <h2 class="fw-bold mb-0">฿ <?= number_format($expense, 2) ?></h2>
                 <i class="bi bi-graph-down-arrow position-absolute end-0 bottom-0 m-3 opacity-25 fs-1"></i>
             </div>
@@ -75,26 +78,25 @@ $profit = $income - $expense;
     <div class="row g-4">
         <div class="col-lg-5">
             <div class="card p-4 h-100 text-center">
-                <h5 class="fw-bold mb-4 text-start">สัดส่วนกำไร</h5>
-                <canvas id="pieChart"></canvas>
+                <h5 class="fw-bold mb-4 text-start"><i class="bi bi-pie-chart-fill text-warning me-2"></i>สัดส่วนการเงิน</h5>
+                <canvas id="pieChart" style="max-height: 280px;"></canvas>
             </div>
         </div>
         <div class="col-lg-7">
             <div class="card p-4 h-100">
-                <h5 class="fw-bold mb-4 text-warning">จัดการรายการล่าสุด</h5>
+                <h5 class="fw-bold mb-4"><i class="bi bi-clock-history text-warning me-2"></i>รายการล่าสุด</h5>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
                             <tr>
                                 <th>ประเภท</th>
                                 <th>รายการ</th>
-                                <th class="text-end">ยอดเงิน</th>
-                                <th class="text-center">จัดการ</th>
+                                <th class="text-end">จำนวนเงิน</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php 
-                            $sql_list = "SELECT * FROM tb_finance ORDER BY fin_date DESC LIMIT 10";
+                            $sql_list = "SELECT * FROM tb_finance ORDER BY fin_date DESC LIMIT 5";
                             $res_list = mysqli_query($conn, $sql_list);
                             while($row = mysqli_fetch_assoc($res_list)):
                             ?>
@@ -104,15 +106,8 @@ $profit = $income - $expense;
                                         <?= $row['fin_type'] == 'income' ? 'รายรับ' : 'รายจ่าย' ?>
                                     </span>
                                 </td>
-                                <td><?= htmlspecialchars($row['fin_title']) ?></td>
+                                <td><?= htmlspecialchars($row['fin_title']) ?: 'ไม่ระบุรายการ' ?></td>
                                 <td class="text-end fw-bold">฿ <?= number_format($row['fin_amount'], 2) ?></td>
-                                <td class="text-center">
-                                    <a href="delete_finance.php?id=<?= $row['fin_id'] ?>" 
-                                       class="btn btn-sm btn-outline-danger shadow-sm" 
-                                       onclick="return confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')">
-                                        <i class="bi bi-trash"></i>
-                                    </a>
-                                </td>
                             </tr>
                             <?php endwhile; ?>
                         </tbody>
@@ -126,13 +121,14 @@ $profit = $income - $expense;
 <script>
 const ctx = document.getElementById('pieChart').getContext('2d');
 new Chart(ctx, {
-    type: 'doughnut',
+    type: 'pie',
     data: {
         labels: ['รายรับ', 'รายจ่าย'],
         datasets: [{
             data: [<?= $income ?>, <?= $expense ?>],
             backgroundColor: ['#28a745', '#dc3545'],
-            borderWidth: 0
+            borderWidth: 5,
+            borderColor: '#ffffff'
         }]
     },
     options: {
@@ -142,5 +138,6 @@ new Chart(ctx, {
     }
 });
 </script>
+
 </body>
 </html>
