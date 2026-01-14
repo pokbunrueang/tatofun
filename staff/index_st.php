@@ -176,10 +176,10 @@ include '../config.php';
                     <div class="icon-circle bg-success bg-opacity-10 text-success">
                         <i class="bi bi-graph-up-arrow"></i>
                     </div>
-                    <h4 class="fw-bold">สรุปยอดขาย</h4>
+                    <h4 class="fw-bold">ดูยอดขาย</h4>
                     <p class="text-muted small">ดูภาพรวมรายได้และจำนวนจานที่ขายได้</p>
                     <a href="finance_report.php" class="btn btn-success btn-staff w-100 mt-auto shadow-sm text-white">
-                        ดูรายงาน
+                        ดูยอดขายวันนี้
                     </a>
                 </div>
             </div>

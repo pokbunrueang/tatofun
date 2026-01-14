@@ -8,18 +8,16 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
     exit();
 }
 
-// 1. ดึงรายการออเดอร์ (ใช้ชื่อตาราง tb_orders ตามภาพ image_3e99a3.jpg)
-// ผมปรับชื่อคอลัมน์ให้เป็นกลาง หากในตารางมีชื่อต่างจากนี้คุณสามารถแก้ใน SQL ได้เลยครับ
+// 1. ดึงรายการออเดอร์ (ปรับชื่อคอลัมน์ให้ตรงกับ tb_orders ในฐานข้อมูล)
 $sql = "SELECT * FROM tb_orders ORDER BY order_id DESC"; 
 $result = mysqli_query($conn, $sql);
 
-// ตรวจสอบว่า Query สำเร็จหรือไม่เพื่อป้องกัน Fatal Error แบบเดิม
 if (!$result) {
     die("เกิดข้อผิดพลาดในการดึงข้อมูล: " . mysqli_error($conn));
 }
 
-// 2. นับออเดอร์รอตรวจสอบ
-$sql_pending = "SELECT COUNT(*) as total FROM tb_orders WHERE status = 'Pending'";
+// 2. นับออเดอร์ที่ยังเป็น 'รอตรวจสอบ'
+$sql_pending = "SELECT COUNT(*) as total FROM tb_orders WHERE order_status = 'รอตรวจสอบ'";
 $res_pending = mysqli_query($conn, $sql_pending);
 $pending_count = ($res_pending) ? mysqli_fetch_assoc($res_pending)['total'] : 0;
 ?>
@@ -36,9 +34,10 @@ $pending_count = ($res_pending) ? mysqli_fetch_assoc($res_pending)['total'] : 0;
         body { background-color: #fffdf0; font-family: 'Kanit', sans-serif; }
         .order-card { border-radius: 25px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.05); background: #ffffff; }
         .status-badge { border-radius: 50px; padding: 5px 15px; font-weight: 600; font-size: 0.85rem; }
-        .status-pending { background: #fff3cd; color: #856404; }
-        .status-shipping { background: #cfe2ff; color: #084298; }
-        .status-success { background: #d1e7dd; color: #0f5132; }
+        /* ปรับสี Badge ให้ตรงกับภาษาไทยในฐานข้อมูล */
+        .status-pending { background: #fff3cd; color: #856404; } /* รอตรวจสอบ */
+        .status-shipping { background: #cfe2ff; color: #084298; } /* กำลังส่ง */
+        .status-success { background: #d1e7dd; color: #0f5132; }  /* สำเร็จแล้ว */
     </style>
 </head>
 <body>
@@ -47,6 +46,9 @@ $pending_count = ($res_pending) ? mysqli_fetch_assoc($res_pending)['total'] : 0;
     <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded-4 shadow-sm border-start border-success border-5">
         <h4 class="fw-bold text-success mb-0">
             <i class="bi bi-clipboard-check-fill me-2"></i> รายการสั่งซื้อ (Orders)
+            <?php if($pending_count > 0): ?>
+                <span class="badge bg-danger rounded-pill ms-2 fs-6"><?= $pending_count ?> ใหม่</span>
+            <?php endif; ?>
         </h4>
         <a href="index_ad.php" class="btn btn-secondary btn-sm rounded-pill px-4 shadow-sm">← กลับหน้าหลัก</a>
     </div>
@@ -68,14 +70,17 @@ $pending_count = ($res_pending) ? mysqli_fetch_assoc($res_pending)['total'] : 0;
                     <tr>
                         <td class="text-center fw-bold">#<?= $row['order_id'] ?></td>
                         <td>
-                            <div class="fw-bold"><?= htmlspecialchars($row['name'] ?? 'ไม่ระบุชื่อ') ?></div>
-                            <small class="text-muted"><?= $row['phone'] ?? '' ?></small>
+                            <div class="fw-bold"><?= htmlspecialchars($row['cus_name'] ?? 'ไม่ระบุชื่อ') ?></div>
+                            <small class="text-muted"><i class="bi bi-telephone"></i> <?= $row['cus_tel'] ?? '-' ?></small>
                         </td>
                         <td class="text-end fw-bold text-primary"><?= number_format($row['total_price'] ?? 0, 2) ?> ฿</td>
                         <td class="text-center">
                             <?php 
-                                $s = $row['status'] ?? 'Pending';
-                                $class = ($s == 'Pending') ? 'status-pending' : (($s == 'Shipping') ? 'status-shipping' : 'status-success');
+                                // ดึงค่าจาก order_status
+                                $s = $row['order_status'] ?? 'รอตรวจสอบ';
+                                $class = 'status-pending';
+                                if($s == 'กำลังส่ง') $class = 'status-shipping';
+                                if($s == 'สำเร็จแล้ว') $class = 'status-success';
                             ?>
                             <span class="status-badge <?= $class ?>"><?= $s ?></span>
                         </td>
@@ -83,10 +88,10 @@ $pending_count = ($res_pending) ? mysqli_fetch_assoc($res_pending)['total'] : 0;
                             <div class="dropdown">
                                 <button class="btn btn-light btn-sm border dropdown-toggle" data-bs-toggle="dropdown">จัดการ</button>
                                 <ul class="dropdown-menu shadow border-0">
-                                    <li><a class="dropdown-item" href="order_detail.php?id=<?= $row['order_id'] ?>">ดูรายละเอียด</a></li>
+                                    <li><a class="dropdown-item" href="order_detail.php?id=<?= $row['order_id'] ?>"><i class="bi bi-eye"></i> ดูรายละเอียด</a></li>
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-primary" href="update_status.php?id=<?= $row['order_id'] ?>&status=Shipping">กำลังส่ง</a></li>
-                                    <li><a class="dropdown-item text-success" href="update_status.php?id=<?= $row['order_id'] ?>&status=Success">สำเร็จแล้ว</a></li>
+                                    <li><a class="dropdown-item text-primary" href="update_status.php?id=<?= $row['order_id'] ?>&status=กำลังส่ง">จัดส่งสินค้า</a></li>
+                                    <li><a class="dropdown-item text-success" href="update_status.php?id=<?= $row['order_id'] ?>&status=สำเร็จแล้ว">ทำรายการสำเร็จ</a></li>
                                 </ul>
                             </div>
                         </td>

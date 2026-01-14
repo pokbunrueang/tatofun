@@ -2,87 +2,93 @@
 session_start();
 include '../config.php';
 
-if (!isset($_GET['id'])) { header("Location: manage_orders.php"); exit(); }
-$order_id = mysqli_real_escape_string($conn, $_GET['id']);
-
-// ปรับ SQL ให้ตรงกับชื่อตารางของคุณ
-$sql = "SELECT o.*, d.*, m.menu_name 
-        FROM tb_orders o
-        JOIN tb_order_details d ON o.order_id = d.order_id
-        JOIN tb_menu m ON d.menu_id = m.menu_id
-        WHERE o.order_id = '$order_id'";
-
-$result = mysqli_query($conn, $sql);
-
-// ป้องกัน Fatal Error หาก Query ผิดพลาด
-if (!$result || mysqli_num_rows($result) == 0) {
-    die("<div class='container py-5'><div class='alert alert-danger'>ไม่พบข้อมูลออเดอร์ หรือ ชื่อคอลัมน์ในฐานข้อมูลไม่ตรงกัน</div></div>");
+if (!isset($_GET['id'])) {
+    header("Location: manage_orders.php");
+    exit();
 }
 
-$order_info = mysqli_fetch_assoc($result);
+$order_id = mysqli_real_escape_string($conn, $_GET['id']);
+
+// 1. ดึงข้อมูลหลักของออเดอร์ (ปรับชื่อคอลัมน์ให้ตรงกับ tb_orders)
+$sql_order = "SELECT * FROM tb_orders WHERE order_id = '$order_id'";
+$res_order = mysqli_query($conn, $sql_order);
+$order = mysqli_fetch_assoc($res_order);
+
+if (!$order) {
+    die("ไม่พบข้อมูลออเดอร์ หรือ ชื่อคอลัมน์ในฐานข้อมูลไม่ตรงกัน");
+}
+
+// 2. ดึงรายการอาหารในออเดอร์นี้ (เชื่อม table tb_order_details กับ tb_menu)
+$sql_items = "SELECT d.*, m.name_menu FROM tb_order_details d 
+              JOIN tb_menu m ON d.id_menu = m.id_menu 
+              WHERE d.order_id = '$order_id'";
+$res_items = mysqli_query($conn, $sql_items);
 ?>
+
 <!doctype html>
 <html lang="th">
 <head>
     <meta charset="utf-8">
     <title>รายละเอียดออเดอร์ #<?= $order_id ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
-        body { background-color: #fffdf0; font-family: 'Kanit', sans-serif; }
-        .detail-card { border-radius: 25px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.05); background: #ffffff; }
+        body { background-color: #f8f9fa; font-family: 'Kanit', sans-serif; }
+        .detail-card { border-radius: 20px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 <div class="container py-5">
-    <div class="card detail-card p-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold text-success mb-0">📦 รายละเอียดออเดอร์ #<?= $order_id ?></h3>
-            <span class="badge bg-primary rounded-pill px-3">สถานะ: <?= $order_info['status'] ?></span>
-        </div>
-        
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <p class="mb-1 text-muted">ข้อมูลลูกค้า</p>
-                <h5 class="fw-bold"><?= htmlspecialchars($order_info['name'] ?? 'ไม่ระบุชื่อ') ?></h5>
-                <p class="mb-0"><i class="bi bi-telephone"></i> <?= $order_info['phone'] ?? '-' ?></p>
-            </div>
+    <div class="mb-4">
+        <a href="manage_orders.php" class="btn btn-outline-dark rounded-pill px-4">← กลับหน้าจัดการ</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card detail-card p-4 h-100">
+                <h5 class="fw-bold mb-3 text-success">ข้อมูลลูกค้า</h5>
+                <p class="mb-1 text-muted small">ชื่อผู้สั่ง:</p>
+                <p class="fw-bold"><?= htmlspecialchars($order['cus_name']) ?></p> <p class="mb-1 text-muted small">เบอร์โทรศัพท์:</p>
+                <p class="fw-bold"><?= htmlspecialchars($order['cus_tel']) ?></p> <p class="mb-1 text-muted small">ที่อยู่จัดส่ง:</p>
+                <p><?= nl2br(htmlspecialchars($order['cus_address'])) ?></p>
+                
+                <hr>
+                <p class="mb-1 text-muted small">สถานะปัจจุบัน:</p>
+                <span class="badge bg-info text-dark rounded-pill px-3"><?= $order['order_status'] ?></span> </div>
         </div>
 
-        <div class="table-responsive">
-            <table class="table align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>รายการอาหาร</th>
-                        <th class="text-center">จำนวน</th>
-                        <th class="text-end">ราคา/หน่วย</th>
-                        <th class="text-end">รวม</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php 
-                    mysqli_data_seek($result, 0); 
-                    while($item = mysqli_fetch_assoc($result)): 
-                    ?>
-                    <tr>
-                        <td><?= htmlspecialchars($item['menu_name']) ?></td>
-                        <td class="text-center"><?= $item['qty'] ?></td>
-                        <td class="text-end"><?= number_format($item['price'], 2) ?></td>
-                        <td class="text-end fw-bold"><?= number_format($item['qty'] * $item['price'], 2) ?></td>
-                    </tr>
-                    <?php endwhile; ?>
-                </tbody>
-                <tfoot class="table-group-divider">
-                    <tr class="fs-5">
-                        <td colspan="3" class="text-end fw-bold">ยอดรวมสุทธิ:</td>
-                        <td class="text-end text-primary fw-bold"><?= number_format($order_info['total_price'], 2) ?> บาท</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-        
-        <div class="text-center mt-4">
-            <a href="manage_orders.php" class="btn btn-secondary rounded-pill px-5">กลับหน้าจัดการ</a>
+        <div class="col-md-8">
+            <div class="card detail-card p-4">
+                <h5 class="fw-bold mb-4">รายการสินค้าที่สั่ง</h5>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>เมนู</th>
+                                <th class="text-center">ราคา</th>
+                                <th class="text-center">จำนวน</th>
+                                <th class="text-end">รวม</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while($item = mysqli_fetch_assoc($res_items)): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($item['name_menu']) ?></td>
+                                <td class="text-center">฿<?= number_format($item['price'], 0) ?></td>
+                                <td class="text-center"><?= $item['qty'] ?></td>
+                                <td class="text-end fw-bold">฿<?= number_format($item['price'] * $item['qty'], 0) ?></td>
+                            </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-light">
+                                <td colspan="3" class="text-end fw-bold">ยอดรวมสุทธิ</td>
+                                <td class="text-end fw-bold text-success fs-4">฿<?= number_format($order['total_price'], 0) ?></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
