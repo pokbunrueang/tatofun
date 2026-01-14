@@ -2,14 +2,14 @@
 session_start();
 
 // ✅ 1. ตรวจสอบสิทธิ์การเข้าถึง (Security Layer)
-if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../login.php"); 
     exit();
 }
 
 $admin_name = isset($_SESSION['fullname']) ? $_SESSION['fullname'] : 'ผู้ดูแลระบบ';
 
-// ดึงรูปโลโก้จาก DB (ถ้ามี) หรือใช้ Default
+// ✅ 2. ดึงข้อมูลพื้นฐานจากฐานข้อมูล
 include '../config.php';
 $sql_logo = "SELECT name_lb FROM tb_logobanner WHERE id_lb = 1";
 $res_logo = mysqli_query($conn, $sql_logo);
@@ -41,7 +41,6 @@ $logo_path = (!empty($logo_row['name_lb'])) ? "img_ad/".$logo_row['name_lb'] : "
             min-height: 100vh;
         }
 
-        /* Navbar ชิดขอบจอ (Full Width) */
         .navbar { 
             background-color: var(--tato-yellow) !important; 
             border-bottom: 3px solid var(--tato-orange);
@@ -83,6 +82,8 @@ $logo_path = (!empty($logo_row['name_lb'])) ? "img_ad/".$logo_row['name_lb'] : "
             font-weight: 600;
             transition: 0.3s;
         }
+        
+        .dropdown-menu { border-radius: 15px; border: none; min-width: 180px; }
     </style>
 </head>
 <body>
@@ -99,11 +100,18 @@ $logo_path = (!empty($logo_row['name_lb'])) ? "img_ad/".$logo_row['name_lb'] : "
                     <button class="btn btn-dark rounded-pill px-3 dropdown-toggle fw-bold shadow-sm" type="button" data-bs-toggle="dropdown">
                         <i class="bi bi-person-circle me-1 text-warning"></i> <?php echo $admin_name; ?>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 p-2" style="border-radius: 15px;">
-                        
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 p-2">
+                        <li>
+                            <a class="dropdown-item py-2" href="../index.php">
+                                <i class="bi bi-shop me-2"></i>ไปหน้าร้านค้า
+                            </a>
+                        </li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item py-2" href="../index.php"><i class="bi bi-shop me-2 text-primary"></i>ไปหน้าร้านค้า</a></li>
-                        <li><a class="dropdown-item py-2 text-danger fw-bold" href="../logout.php"><i class="bi bi-power me-2"></i>ออกจากระบบ</a></li>
+                        <li>
+                            <a class="dropdown-item py-2 text-danger fw-bold" href="../logout.php">
+                                <i class="bi bi-power me-2"></i>ออกจากระบบ
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -117,7 +125,6 @@ $logo_path = (!empty($logo_row['name_lb'])) ? "img_ad/".$logo_row['name_lb'] : "
         </div>
 
         <div class="row g-4 justify-content-center">
-            
             <div class="col-12 col-md-6 col-lg-4">
                 <div class="card admin-card p-4 text-center border-top border-5 border-success">
                     <div class="card-body d-flex flex-column p-0">
@@ -202,10 +209,9 @@ $logo_path = (!empty($logo_row['name_lb'])) ? "img_ad/".$logo_row['name_lb'] : "
                     </div>
                 </div>
             </div>
-
         </div>
 
-        <div class="mt-5 p-4 info-box shadow-sm border border-warning border-opacity-25">
+        <div class="mt-5 p-4 info-box shadow-sm">
             <div class="row align-items-center">
                 <div class="col-md-9">
                     <h5 class="fw-bold mb-1 text-dark">
@@ -217,7 +223,7 @@ $logo_path = (!empty($logo_row['name_lb'])) ? "img_ad/".$logo_row['name_lb'] : "
                     </p>
                 </div>
                 <div class="col-md-3 text-md-end mt-3 mt-md-0">
-                    <a href="../index.php"  class="btn btn-outline-dark btn-sm rounded-pill px-4">
+                    <a href="../index.php" class="btn btn-outline-dark btn-sm rounded-pill px-4">
                         <i class="bi bi-eye me-1"></i> ดูหน้าร้านจริง
                     </a>
                 </div>

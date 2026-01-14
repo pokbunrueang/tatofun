@@ -2,10 +2,12 @@
 session_start(); 
 include 'config.php'; 
 
-// 1. ระบบดักจับ Role (ตรวจสอบสิทธิ์)
+// 1. ระบบดักจับ Role
 if (isset($_SESSION['role'])) {
-    if ($_SESSION['role'] == 'admin') { header("Location: admin/index_ad.php"); exit(); }
-    if ($_SESSION['role'] == 'staff') { header("Location: staff/index_st.php"); exit(); }
+    if ($_SESSION['role'] == 'staff') { 
+        header("Location: staff/index_st.php"); 
+        exit(); 
+    }
 } 
 
 // 2. ดึงข้อมูลโลโก้และแบนเนอร์
@@ -19,7 +21,6 @@ while($row = mysqli_fetch_assoc($result)) {
 $logo_path    = !empty($images[1]) ? "admin/img_ad/".$images[1] : "img/Logo.png";
 $banner1_path = !empty($images[2]) ? "admin/img_ad/".$images[2] : "img/no1.png";
 $banner2_path = !empty($images[3]) ? "admin/img_ad/".$images[3] : "img/no2.png";
-$banner3_path = !empty($images[4]) ? "admin/img_ad/".$images[4] : "img/no3.png";
 ?>
 
 <!doctype html>
@@ -44,7 +45,6 @@ $banner3_path = !empty($images[4]) ? "admin/img_ad/".$images[4] : "img/no3.png";
 
         body { font-family: 'Kanit', sans-serif; background-color: var(--tato-light); color: var(--tato-dark); }
         
-        /* Navbar Custom - ปรับให้ชิดขอบและดูสะอาดตา */
         .navbar { 
             background-color: var(--tato-yellow) !important; 
             border-bottom: 3px solid var(--tato-orange);
@@ -64,6 +64,16 @@ $banner3_path = !empty($images[4]) ? "admin/img_ad/".$images[4] : "img/no3.png";
 
         .carousel-item img { height: 450px; object-fit: cover; }
         @media (max-width: 768px) { .carousel-item img { height: 250px; } }
+
+        /* ปรับดีไซน์ปุ่มใน Navbar ไม่ให้มี Dropdown */
+        .btn-logout { 
+            background-color: white; 
+            color: #dc3545; 
+            border: 1px solid #dc3545; 
+            border-radius: 20px; 
+            font-weight: 600;
+        }
+        .btn-logout:hover { background-color: #dc3545; color: white; }
     </style>
 </head>
 <body>
@@ -73,7 +83,8 @@ $banner3_path = !empty($images[4]) ? "admin/img_ad/".$images[4] : "img/no3.png";
     </a>
 
     <nav class="navbar navbar-expand-lg sticky-top shadow-sm">
-        <div class="container-fluid"> <a class="navbar-brand d-flex align-items-center" href="index.php">
+        <div class="container-fluid"> 
+            <a class="navbar-brand d-flex align-items-center" href="index.php">
                 <img src="<?php echo $logo_path; ?>" width="45" height="45" class="me-2 rounded-circle bg-white shadow-sm">
                 <span class="fw-bold fs-4 text-dark">Tato<span class="text-white">Fun</span></span>
             </a>
@@ -95,7 +106,7 @@ $banner3_path = !empty($images[4]) ? "admin/img_ad/".$images[4] : "img/no3.png";
                     </li>
                 </ul>
 
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto align-items-center gap-2">
                     <?php if(!isset($_SESSION['fullname'])): ?>
                         <li class="nav-item">
                             <a href="login.php" class="btn btn-dark rounded-pill px-4 shadow-sm">
@@ -103,13 +114,21 @@ $banner3_path = !empty($images[4]) ? "admin/img_ad/".$images[4] : "img/no3.png";
                             </a>
                         </li>
                     <?php else: ?>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle fw-bold" href="#" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle me-1"></i> <?= $_SESSION['fullname'] ?>
+                        <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
+                            <li class="nav-item">
+                                <a class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold" href="admin/index_ad.php">
+                                    <i class="bi bi-speedometer2 me-1"></i> แดชบอร์ด Admin
+                                </a>
+                            </li>
+                        <?php endif; ?>
+                        
+                        <li class="nav-item">
+                            <span class="text-dark fw-bold me-2"><?= $_SESSION['fullname'] ?></span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-logout btn-sm px-3 shadow-sm" href="logout.php">
+                                <i class="bi bi-power me-1"></i> ออกจากระบบ
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
-                                <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-power me-2"></i>ออกจากระบบ</a></li>
-                            </ul>
                         </li>
                     <?php endif; ?>
                 </ul>
@@ -120,39 +139,9 @@ $banner3_path = !empty($images[4]) ? "admin/img_ad/".$images[4] : "img/no3.png";
     <div class="container-fluid p-0">
         <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
             <div class="carousel-inner">
-                <div class="carousel-item active">
-                    <img src="<?= $banner1_path ?>" class="d-block w-100">
-                </div>
-                <div class="carousel-item">
-                    <img src="<?= $banner2_path ?>" class="d-block w-100">
-                </div>
+                <div class="carousel-item active"><img src="<?= $banner1_path ?>" class="d-block w-100"></div>
+                <div class="carousel-item"><img src="<?= $banner2_path ?>" class="d-block w-100"></div>
             </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon bg-dark rounded-circle"></span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon bg-dark rounded-circle"></span>
-            </button>
-        </div>
-    </div>
-
-    <div class="container py-5" id="menu-section">
-        <div class="text-center mb-5">
-            <h2 class="fw-bold display-6">เลือกความ <span class="text-warning">ฟิน</span> ในแบบคุณ</h2>
-            <div class="mx-auto bg-warning" style="height: 4px; width: 60px; border-radius: 2px;"></div>
-        </div>
-        
-        <div class="row g-4">
-            <?php
-            $sql_menu = "SELECT * FROM tb_menu";
-            $res_menu = mysqli_query($conn, $sql_menu);
-            if (mysqli_num_rows($res_menu) > 0) {
-                while($menu = mysqli_fetch_assoc($res_menu)):
-                    $m_img = !empty($menu['img_menu']) ? "admin/img_menu/".$menu['img_menu'] : "img/default.png";
-            ?>
-                <?php endwhile; } else { ?>
-                <div class='col-12 text-center'><p class='text-muted'>ยังไม่มีเมนูในขณะนี้</p></div>
-            <?php } ?>
         </div>
     </div>
 
@@ -185,6 +174,7 @@ $banner3_path = !empty($images[4]) ? "admin/img_ad/".$images[4] : "img/no3.png";
             </div>
         </div>
     </footer>
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
