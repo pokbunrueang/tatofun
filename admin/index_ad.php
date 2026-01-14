@@ -100,8 +100,9 @@ $logo_path = (!empty($logo_row['name_lb'])) ? "img_ad/".$logo_row['name_lb'] : "
                         <i class="bi bi-person-circle me-1 text-warning"></i> <?php echo $admin_name; ?>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 p-2" style="border-radius: 15px;">
-                        <li><a class="dropdown-item py-2" href="../index.php"><i class="bi bi-shop me-2 text-primary"></i>ไปหน้าร้านค้า</a></li>
+                        
                         <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item py-2" href="../index.php"><i class="bi bi-shop me-2 text-primary"></i>ไปหน้าร้านค้า</a></li>
                         <li><a class="dropdown-item py-2 text-danger fw-bold" href="../logout.php"><i class="bi bi-power me-2"></i>ออกจากระบบ</a></li>
                     </ul>
                 </div>
@@ -216,7 +217,7 @@ $logo_path = (!empty($logo_row['name_lb'])) ? "img_ad/".$logo_row['name_lb'] : "
                     </p>
                 </div>
                 <div class="col-md-3 text-md-end mt-3 mt-md-0">
-                    <a href="../index.php" target="_blank" class="btn btn-outline-dark btn-sm rounded-pill px-4">
+                    <a href="../index.php"  class="btn btn-outline-dark btn-sm rounded-pill px-4">
                         <i class="bi bi-eye me-1"></i> ดูหน้าร้านจริง
                     </a>
                 </div>

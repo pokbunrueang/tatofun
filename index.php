@@ -6,7 +6,7 @@ include 'config.php';
 if (isset($_SESSION['role'])) {
     if ($_SESSION['role'] == 'admin') { header("Location: admin/index_ad.php"); exit(); }
     if ($_SESSION['role'] == 'staff') { header("Location: staff/index_st.php"); exit(); }
-}
+} 
 
 // 2. ดึงข้อมูลโลโก้และแบนเนอร์
 $sql = "SELECT * FROM tb_logobanner";
