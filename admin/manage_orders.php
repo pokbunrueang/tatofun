@@ -8,7 +8,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
     exit();
 }
 
-// 1. ดึงรายการออเดอร์ (ปรับชื่อคอลัมน์ให้ตรงกับ tb_orders ในฐานข้อมูล)
+// 1. ดึงรายการออเดอร์
 $sql = "SELECT * FROM tb_orders ORDER BY order_id DESC"; 
 $result = mysqli_query($conn, $sql);
 
@@ -34,10 +34,13 @@ $pending_count = ($res_pending) ? mysqli_fetch_assoc($res_pending)['total'] : 0;
         body { background-color: #fffdf0; font-family: 'Kanit', sans-serif; }
         .order-card { border-radius: 25px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.05); background: #ffffff; }
         .status-badge { border-radius: 50px; padding: 5px 15px; font-weight: 600; font-size: 0.85rem; }
-        /* ปรับสี Badge ให้ตรงกับภาษาไทยในฐานข้อมูล */
-        .status-pending { background: #fff3cd; color: #856404; } /* รอตรวจสอบ */
-        .status-shipping { background: #cfe2ff; color: #084298; } /* กำลังส่ง */
-        .status-success { background: #d1e7dd; color: #0f5132; }  /* สำเร็จแล้ว */
+        .status-pending { background: #fff3cd; color: #856404; } 
+        .status-shipping { background: #cfe2ff; color: #084298; } 
+        .status-success { background: #d1e7dd; color: #0f5132; }  
+        
+        /* ตกแต่งปุ่มพิมพ์เพิ่มเติม */
+        .btn-print { background-color: #0dcaf0; color: white; border: none; }
+        .btn-print:hover { background-color: #0baccc; color: white; }
     </style>
 </head>
 <body>
@@ -55,11 +58,11 @@ $pending_count = ($res_pending) ? mysqli_fetch_assoc($res_pending)['total'] : 0;
 
     <div class="card order-card overflow-hidden">
         <div class="table-responsive">
-            <table class="table table-hover mb-0 text-nowrap">
+            <table class="table table-hover mb-0 text-nowrap align-middle">
                 <thead class="table-light">
                     <tr>
                         <th class="text-center">ID</th>
-                        <th>ชื่อลูกค้า</th>
+                        <th>ข้อมูลลูกค้า</th>
                         <th class="text-end">ยอดรวม</th>
                         <th class="text-center">สถานะ</th>
                         <th class="text-center">จัดการ</th>
@@ -76,7 +79,6 @@ $pending_count = ($res_pending) ? mysqli_fetch_assoc($res_pending)['total'] : 0;
                         <td class="text-end fw-bold text-primary"><?= number_format($row['total_price'] ?? 0, 2) ?> ฿</td>
                         <td class="text-center">
                             <?php 
-                                // ดึงค่าจาก order_status
                                 $s = $row['order_status'] ?? 'รอตรวจสอบ';
                                 $class = 'status-pending';
                                 if($s == 'กำลังส่ง') $class = 'status-shipping';
@@ -85,14 +87,20 @@ $pending_count = ($res_pending) ? mysqli_fetch_assoc($res_pending)['total'] : 0;
                             <span class="status-badge <?= $class ?>"><?= $s ?></span>
                         </td>
                         <td class="text-center">
-                            <div class="dropdown">
-                                <button class="btn btn-light btn-sm border dropdown-toggle" data-bs-toggle="dropdown">จัดการ</button>
-                                <ul class="dropdown-menu shadow border-0">
-                                    <li><a class="dropdown-item" href="order_detail.php?id=<?= $row['order_id'] ?>"><i class="bi bi-eye"></i> ดูรายละเอียด</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-primary" href="update_status.php?id=<?= $row['order_id'] ?>&status=กำลังส่ง">จัดส่งสินค้า</a></li>
-                                    <li><a class="dropdown-item text-success" href="update_status.php?id=<?= $row['order_id'] ?>&status=สำเร็จแล้ว">ทำรายการสำเร็จ</a></li>
-                                </ul>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="print_shipping.php?id=<?= $row['order_id'] ?>" target="_blank" class="btn btn-print btn-sm rounded-pill px-3 shadow-sm">
+                                    <i class="bi bi-printer"></i> พิมพ์
+                                </a>
+
+                                <div class="dropdown">
+                                    <button class="btn btn-light btn-sm border rounded-pill dropdown-toggle shadow-sm" data-bs-toggle="dropdown">จัดการ</button>
+                                    <ul class="dropdown-menu shadow border-0">
+                                        <li><a class="dropdown-item" href="order_detail.php?id=<?= $row['order_id'] ?>"><i class="bi bi-eye"></i> ดูรายละเอียด</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-primary" href="update_status.php?id=<?= $row['order_id'] ?>&status=กำลังส่ง"><i class="bi bi-truck"></i> จัดส่งสินค้า</a></li>
+                                        <li><a class="dropdown-item text-success" href="update_status.php?id=<?= $row['order_id'] ?>&status=สำเร็จแล้ว"><i class="bi bi-check-circle"></i> ทำรายการสำเร็จ</a></li>
+                                    </ul>
+                                </div>
                             </div>
                         </td>
                     </tr>
