@@ -1,51 +1,34 @@
 <?php
 session_start();
-include '../config.php';
+include '../config.php'; // เชื่อมต่อฐานข้อมูล
 
+// 1. ตรวจสอบสิทธิ์ Admin เพื่อความปลอดภัย
+if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
+    die("คุณไม่มีสิทธิ์เข้าถึงส่วนนี้");
+}
+
+// 2. รับค่า ID ออเดอร์ และ สถานะที่ต้องการเปลี่ยน จาก URL
 if (isset($_GET['id']) && isset($_GET['status'])) {
-    $order_id = $_GET['id'];
-    $status = $_GET['status'];
+    
+    $order_id = mysqli_real_escape_string($conn, $_GET['id']);
+    $new_status = mysqli_real_escape_string($conn, $_GET['status']);
 
-    if ($status == 'approve') {
-        // --- ส่วนที่ 1: อัปเดตสถานะการชำระเงิน ---
-        $sql1 = "UPDATE tb_order SET order_status = 'paid' WHERE order_id = '$order_id'";
-        mysqli_query($conn, $sql1);
+    // 3. อัปเดตข้อมูลในฐานข้อมูล
+    $sql = "UPDATE tb_orders SET order_status = '$new_status' WHERE order_id = '$order_id'";
 
-        $sql2 = "UPDATE tb_payment SET pay_status = 'verified' WHERE order_id = '$order_id'";
-        mysqli_query($conn, $sql2);
-        
-        // --- ส่วนที่ 2: ระบบตัดสต็อกสินค้าอัตโนมัติ (เพิ่มใหม่) ---
-        // 1. ดึงรายการสินค้าและจำนวนจากออเดอร์นี้
-        // สมมติตารางรายละเอียดออเดอร์คุณชื่อ tb_order_detail และมีคอลัมน์ menu_id, qty
-        $sql_items = "SELECT menu_id, qty FROM tb_order_detail WHERE order_id = '$order_id'";
-        $res_items = mysqli_query($conn, $sql_items);
-
-        while($item = mysqli_fetch_assoc($res_items)) {
-            $m_id = $item['menu_id'];
-            $qty = $item['qty'];
-
-            // 2. อัปเดตลดจำนวนสต็อกในตาราง tb_menu
-            $sql_update_stock = "UPDATE tb_menu 
-                                 SET menu_stock = menu_stock - $qty 
-                                 WHERE id_menu = '$m_id'";
-            mysqli_query($conn, $sql_update_stock);
-        }
-
-        // --- ส่วนที่ 3: บันทึกลงตารางการเงิน (tb_finance) ---
-        $res_pay = mysqli_query($conn, "SELECT pay_amount FROM tb_payment WHERE order_id = '$order_id'");
-        $pay_data = mysqli_fetch_assoc($res_pay);
-        $amount = $pay_data['pay_amount'];
-        
-        $sql3 = "INSERT INTO tb_finance (order_id, amount, date_added) VALUES ('$order_id', '$amount', NOW())";
-        mysqli_query($conn, $sql3);
-
+    if (mysqli_query($conn, $sql)) {
+        // อัปเดตสำเร็จ: ส่งกลับไปหน้าเดิมพร้อมแจ้งเตือน
+        echo "<script>
+                alert('อัปเดตสถานะออเดอร์ #$order_id เป็น $new_status เรียบร้อย!');
+                window.location = 'manage_orders.php';
+              </script>";
     } else {
-        // กรณีปฏิเสธการชำระเงิน
-        $sql_reject = "UPDATE tb_order SET order_status = 'pending' WHERE order_id = '$order_id'";
-        mysqli_query($conn, $sql_reject);
+        // เกิดข้อผิดพลาด
+        echo "เกิดข้อผิดพลาด: " . mysqli_error($conn);
     }
-
-    header("Location: manage_payment.php");
+} else {
+    // ถ้าไม่มีการส่งค่ามา ให้เด้งกลับหน้าหลัก
+    header("Location: manage_orders.php");
     exit();
 }
 ?>

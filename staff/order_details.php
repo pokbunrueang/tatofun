@@ -2,7 +2,8 @@
 session_start();
 include '../config.php'; 
 
-// 1. ตรวจสอบสิทธิ์พนักงาน
+// 1. ตรวจสอบสิทธิ์ (ถ้าเป็นลูกค้าให้เช็ค session แบบลูกค้า ถ้าเป็น staff ให้เช็คแบบ staff)
+// ในที่นี้คงไว้ตามที่คุณส่งมาคือเช็ค staff
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'staff') {
     header("Location: ../login.php");
     exit();
@@ -16,20 +17,24 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 $order_id = mysqli_real_escape_string($conn, $_GET['id']);
 
-// 3. ดึงข้อมูลรายการอาหาร (อ้างอิงโครงสร้างจริงใน db_tatofun.sql)
-$sql = "SELECT m.name_menu, m.price_menu 
-        FROM tb_order_details od
-        JOIN tb_menu m ON od.menu_id = m.id_menu 
-        WHERE od.order_id = '$order_id'";
+// 3. ดึงข้อมูลหัวข้อออเดอร์ (ข้อมูลลูกค้า + ยอดรวม)
+$sql_order = "SELECT * FROM tb_orders WHERE order_id = '$order_id'";
+$res_order = mysqli_query($conn, $sql_order);
+$order = mysqli_fetch_assoc($res_order);
 
-$result = mysqli_query($conn, $sql);
-
-// ตรวจสอบว่ามีข้อมูลไหม
-if (mysqli_num_rows($result) == 0) {
+if (!$order) {
     echo "<script>alert('ไม่พบข้อมูลออเดอร์นี้'); window.location='manage_orders.php';</script>";
     exit();
 }
+
+// 4. ดึงข้อมูลรายการอาหารภายในออเดอร์
+$sql_items = "SELECT od.*, m.name_menu 
+              FROM tb_order_details od
+              JOIN tb_menu m ON od.id_menu = m.id_menu 
+              WHERE od.order_id = '$order_id'";
+$res_items = mysqli_query($conn, $sql_items);
 ?>
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -54,21 +59,19 @@ if (mysqli_num_rows($result) == 0) {
             min-height: 100vh; 
         }
 
-        /* จัดกึ่งกลางเฉพาะตัวใบเสร็จ */
         .receipt-wrapper {
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px 0;
+            padding: 40px 0;
         }
 
         .receipt-card { 
             border: none; 
             border-radius: 30px; 
             box-shadow: 0 20px 50px rgba(0,0,0,0.05); 
-            overflow: hidden; 
             background: #fff; 
-            max-width: 450px;
+            max-width: 500px;
             width: 100%;
             position: relative;
         }
@@ -78,6 +81,7 @@ if (mysqli_num_rows($result) == 0) {
             padding: 30px; 
             text-align: center; 
             color: #000;
+            border-radius: 30px 30px 0 0;
         }
 
         .total-box { 
@@ -88,50 +92,47 @@ if (mysqli_num_rows($result) == 0) {
             margin-top: 20px;
         }
 
-        .btn-back { 
-            background: var(--tato-dark); 
-            color: #fff; 
-            border-radius: 50px; 
-            padding: 10px; 
-            width: 100%; 
-            display: block; 
-            text-align: center; 
-            font-weight: 600;
-            text-decoration: none;
-            margin-top: 10px;
+        .payment-qr {
+            text-align: center;
+            background: #fdfdfd;
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #eee;
         }
 
-        .btn-print {
-            border: 2px solid var(--tato-orange);
-            color: var(--tato-orange);
+        .btn-action {
             border-radius: 50px;
-            padding: 10px;
+            padding: 12px;
             width: 100%;
             display: block;
             text-align: center;
             font-weight: 600;
             text-decoration: none;
+            margin-top: 10px;
+            transition: 0.3s;
         }
 
+        .btn-back { background: var(--tato-dark); color: #fff; }
+        .btn-print { border: 2px solid var(--tato-orange); color: var(--tato-orange); }
+        .btn-print:hover { background: var(--tato-orange); color: #fff; }
+
         @media print {
-            .container-fluid, .btn-back, .btn-print { display: none !important; }
-            body { background: #fff; padding: 0; }
+            .container-fluid, .btn-action { display: none !important; }
+            body { background: #fff; }
             .receipt-wrapper { padding: 0; }
-            .receipt-card { box-shadow: none; border: 1px solid #ddd; }
+            .receipt-card { box-shadow: none; border: 1px solid #ddd; max-width: 100%; }
         }
     </style>
 </head>
 <body>
 
-<div class="container-fluid bg-white py-3 shadow-sm mb-4">
+<div class="container-fluid bg-white py-3 shadow-sm mb-2">
     <div class="container d-flex justify-content-between align-items-center">
-        <a href="manage_orders.php" class="btn btn-light rounded-pill px-3 shadow-sm border-0" style="background-color: #f8f9fa;">
+        <a href="manage_orders.php" class="btn btn-light rounded-pill px-3 border-0">
             <i class="bi bi-arrow-left-circle me-1"></i> กลับไปรายการออเดอร์
         </a>
-        <h4 class="fw-bold mb-0" style="color: #ffc107;">รายละเอียดออเดอร์</h4>
-        <div style="width: 150px;" class="d-none d-md-block text-end small text-muted">
-            #<?php echo $order_id; ?>
-        </div>
+        <h4 class="fw-bold mb-0 text-warning">TatoFun Detail</h4>
     </div>
 </div>
 
@@ -140,40 +141,46 @@ if (mysqli_num_rows($result) == 0) {
         <div class="receipt-header">
             <i class="bi bi-receipt-cutoff fs-1"></i>
             <h3 class="fw-bold mb-0">TatoFun Fries</h3>
-            <p class="mb-0 small">ใบแจ้งรายการอาหาร</p>
+            <p class="mb-0 small">ใบแจ้งรายการและหลักฐานการสั่งซื้อ</p>
         </div>
 
         <div class="card-body p-4">
-            <div class="d-flex justify-content-between mb-4 border-bottom pb-3">
-                <div>
-                    <span class="text-muted small">หมายเลข:</span>
-                    <div class="fw-bold text-dark">#<?php echo $order_id; ?></div>
+            <div class="mb-4 border-bottom pb-3">
+                <div class="row">
+                    <div class="col-6">
+                        <span class="text-muted small">หมายเลขคำสั่งซื้อ:</span>
+                        <div class="fw-bold text-dark">#<?php echo $order['order_id']; ?></div>
+                    </div>
+                    <div class="col-6 text-end">
+                        <span class="text-muted small">สถานะ:</span>
+                        <div class="badge <?php echo ($order['order_status'] == 'รอตรวจสอบ') ? 'bg-warning' : 'bg-success'; ?> d-block">
+                            <?php echo $order['order_status']; ?>
+                        </div>
+                    </div>
                 </div>
-                <div class="text-end">
-                    <span class="text-muted small">วันที่:</span>
-                    <div class="fw-bold text-dark"><?php echo date('d/m/Y'); ?></div>
+                <div class="mt-2">
+                    <span class="text-muted small">ข้อมูลลูกค้า:</span>
+                    <div class="small fw-bold"><?php echo htmlspecialchars($order['cus_name']); ?> (<?php echo $order['cus_tel']; ?>)</div>
+                    <div class="small text-muted text-truncate"><?php echo htmlspecialchars($order['cus_address']); ?></div>
                 </div>
             </div>
 
             <table class="table table-borderless">
                 <thead>
                     <tr class="border-bottom small text-muted">
-                        <th>รายการอาหาร</th>
+                        <th>รายการ</th>
+                        <th class="text-center">จำนวน</th>
                         <th class="text-end">ราคา</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php 
-                    $total = 0;
-                    while($item = mysqli_fetch_assoc($result)): 
-                        $total += $item['price_menu'];
-                    ?>
+                    <?php while($item = mysqli_fetch_assoc($res_items)): ?>
                     <tr>
-                        <td class="py-2">
-                            <i class="bi bi-check2-circle text-warning me-1"></i>
+                        <td class="py-2 small">
                             <?php echo htmlspecialchars($item['name_menu']); ?>
                         </td>
-                        <td class="text-end py-2 fw-bold">฿<?php echo number_format($item['price_menu'], 2); ?></td>
+                        <td class="text-center py-2"><?php echo $item['qty']; ?></td>
+                        <td class="text-end py-2 fw-bold">฿<?php echo number_format($item['price'] * $item['qty'], 2); ?></td>
                     </tr>
                     <?php endwhile; ?>
                 </tbody>
@@ -182,16 +189,29 @@ if (mysqli_num_rows($result) == 0) {
             <div class="total-box">
                 <div class="d-flex justify-content-between align-items-center">
                     <span class="fw-bold">ยอดรวมสุทธิ</span>
-                    <span class="h3 fw-bold text-danger mb-0">฿<?php echo number_format($total, 2); ?></span>
+                    <span class="h3 fw-bold text-danger mb-0">฿<?php echo number_format($order['total_price'], 2); ?></span>
                 </div>
             </div>
 
+            <?php if($order['order_status'] == 'รอตรวจสอบ'): ?>
+            <div class="payment-qr">
+                <p class="mb-2 fw-bold"><i class="bi bi-qr-code-scan me-2"></i>สแกนเพื่อชำระเงิน (PromptPay)</p>
+                <?php
+                $promptpay_id = "0812345678"; // ** แก้เป็นเบอร์โทรของคุณ **
+                $amount = $order['total_price'];
+                $qr_url = "https://promptpay.io/$promptpay_id/$amount.png";
+                ?>
+                <img src="<?php echo $qr_url; ?>" style="width:200px;" class="img-fluid rounded shadow-sm">
+                <p class="mt-2 mb-0 x-small text-muted">ชื่อบัญชี: ร้าน TatoFun Fries</p>
+            </div>
+            <?php endif; ?>
+
             <div class="mt-4">
-                <a href="javascript:window.print()" class="btn-print mb-2">
-                    <i class="bi bi-printer me-2"></i> พิมพ์ใบเสร็จ
-                </a>
-                <a href="manage_orders.php" class="btn-back">
-                    กลับไปจัดการออเดอร์
+                <button onclick="window.print()" class="btn-action btn-print">
+                    <i class="bi bi-printer me-2"></i> พิมพ์ใบแจ้งหนี้/ใบเสร็จ
+                </button>
+                <a href="manage_orders.php" class="btn-action btn-back">
+                    กลับไปหน้าจัดการ
                 </a>
             </div>
         </div>

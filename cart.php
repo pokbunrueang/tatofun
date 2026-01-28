@@ -6,10 +6,10 @@ $cart_items = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
 $total_price = 0;
 $total_qty = 0;
 
-// คำนวณจำนวนชิ้นทั้งหมด (เพื่อให้ขึ้น 13 หรือ 16 ชิ้น)
+// 1. คำนวณจำนวนชิ้นทั้งหมดในตะกร้า
 if (!empty($cart_items)) {
     foreach ($cart_items as $qty) {
-        $total_qty += $qty;
+        $total_qty += (int)$qty;
     }
 }
 ?>
@@ -26,9 +26,9 @@ if (!empty($cart_items)) {
         body { background-color: #fdfdfd; font-family: 'Kanit', sans-serif; }
         .navbar { background-color: #fff !important; padding: 15px 0; }
         .cart-card { border: none; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .product-img { width: 80px; height: 80px; object-fit: cover; border-radius: 15px; }
-        .btn-checkout { background-color: #ffc107; color: #000; font-weight: 600; border-radius: 12px; border: none; padding: 12px; transition: 0.3s; }
-        .btn-checkout:hover:not([disabled]) { background-color: #ff9800; transform: translateY(-2px); }
+        .product-img { width: 80px; height: 80px; object-fit: cover; border-radius: 15px; background-color: #eee; }
+        .btn-checkout { background-color: #ffc107; color: #000; font-weight: 600; border-radius: 12px; border: none; padding: 12px; transition: 0.3s; text-decoration: none; display: block; text-align: center; }
+        .btn-checkout:hover:not([disabled]) { background-color: #ff9800; transform: translateY(-2px); color: #000; }
         .cart-badge { background-color: #ffc107; color: #000; font-weight: bold; }
         .table thead th { border-top: none; }
     </style>
@@ -40,7 +40,7 @@ if (!empty($cart_items)) {
         <a class="btn btn-outline-dark rounded-pill px-3 py-1" href="menu.php">
             <i class="bi bi-chevron-left"></i> เลือกเมนูเพิ่ม
         </a>
-        <span class="fw-bold fs-5">ตะกร้าสินค้า</span>
+        <span class="fw-bold fs-5 text-dark">Tato<span class="text-warning">Fun</span> Cart</span>
     </div>
 </nav>
 
@@ -54,7 +54,7 @@ if (!empty($cart_items)) {
                     <div class="text-center py-5">
                         <i class="bi bi-cart-x display-1 text-muted opacity-25"></i>
                         <p class="text-muted mt-3">ตะกร้าของคุณยังว่างเปล่า</p>
-                        <a href="menu.php" class="btn btn-dark rounded-pill px-4">ไปเลือกเมนูฟินๆ กันเลย</a>
+                        <a href="menu.php" class="btn btn-dark rounded-pill px-4 mt-2">ไปเลือกเมนูฟินๆ กันเลย</a>
                     </div>
                 <?php else: ?>
                     <div class="table-responsive">
@@ -71,19 +71,20 @@ if (!empty($cart_items)) {
                             <tbody>
                                 <?php 
                                 foreach ($cart_items as $id => $qty): 
-                                    // ดึงข้อมูลสินค้าจากฐานข้อมูล
                                     $id = mysqli_real_escape_string($conn, $id);
                                     $sql = "SELECT * FROM tb_menu WHERE id_menu = '$id'";
                                     $result = mysqli_query($conn, $sql);
                                     if ($row = mysqli_fetch_assoc($result)):
                                         $subtotal = $row['price_menu'] * $qty;
                                         $total_price += $subtotal;
+                                        // แก้ไข Path รูปภาพให้ถูกต้อง
+                                        $img_path = "admin/img_ad/" . $row['img_menu'];
                                 ?>
                                 <tr>
-                                    <td>
-                                        <img src="img/<?= htmlspecialchars($row['img_menu']) ?>" 
+                                    <td style="width: 100px;">
+                                        <img src="<?= $img_path ?>" 
                                              class="product-img shadow-sm" 
-                                             onerror="this.src='https://placehold.co/100x100?text=TatoFun'">
+                                             onerror="this.src='img/no1.png';">
                                     </td>
                                     <td>
                                         <div class="fw-bold text-dark"><?= htmlspecialchars($row['name_menu']) ?></div>
@@ -125,27 +126,26 @@ if (!empty($cart_items)) {
                 </div>
                 <hr class="opacity-50">
                 <div class="d-flex justify-content-between mb-4">
-                    <span class="fw-bold fs-5">ยอดชำระสุทธิ</span>
+                    <span class="fw-bold fs-5 text-dark">ยอดชำระสุทธิ</span>
                     <span class="fw-bold fs-5 text-dark">฿<?= number_format($total_price, 0) ?></span>
                 </div>
                 
-                <button class="btn btn-checkout w-100 py-3 shadow-sm mb-3" 
-                        <?= empty($cart_items) ? 'disabled' : '' ?> 
-                        onclick="window.location.href='checkout.php'">
+                <a href="checkout.php" class="btn btn-checkout w-100 py-3 shadow-sm mb-3 <?= empty($cart_items) ? 'disabled pointer-events-none opacity-50' : '' ?>">
                     สั่งซื้อเลย (<?= $total_qty ?> ชิ้น)
-                </button>
+                </a>
+                
                 <div class="text-center mt-2">
-                    <img src="img/Logo.png" alt="Logo" style="height: 30px; opacity: 0.5;">
+                    <img src="img/Logo.png" alt="Logo" style="height: 30px; opacity: 0.5;" onerror="this.style.display='none'">
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
-    <a href="cart.php" class="btn btn-dark rounded-pill py-2 px-4 shadow-lg border-2 border-warning">
-        <i class="bi bi-cart3 me-2"></i> ตะกร้าของฉัน 
-        <span class="badge cart-badge rounded-circle px-2"><?= $total_qty ?></span>
+<div style="position: fixed; bottom: 30px; right: 30px; z-index: 1000;">
+    <a href="cart.php" class="btn btn-dark rounded-pill py-3 px-4 shadow-lg border-2 border-warning text-decoration-none">
+        <i class="bi bi-cart3 me-2 text-warning"></i> ตะกร้าของฉัน 
+        <span class="badge cart-badge rounded-circle px-2 ms-1"><?= $total_qty ?></span>
     </a>
 </div>
 

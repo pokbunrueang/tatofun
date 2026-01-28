@@ -1,21 +1,3 @@
-<?php
-session_start();
-include '../config.php';
-
-// ตรวจสอบสิทธิ์ Admin
-if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
-    header("Location: ../login.php"); 
-    exit();
-}
-
-// ดึงข้อมูลรูปภาพจากตาราง tb_logobanner
-$sql = "SELECT * FROM tb_logobanner ORDER BY id_lb ASC";
-$result = mysqli_query($conn, $sql);
-$images = [];
-while($row = mysqli_fetch_assoc($result)) {
-    $images[$row['id_lb']] = $row['name_lb'];
-}
-?>
 <!doctype html>
 <html lang="th">
 <head>
@@ -31,24 +13,31 @@ while($row = mysqli_fetch_assoc($result)) {
         .card-custom:hover { transform: translateY(-5px); }
         .img-preview { height: 160px; width: 100%; object-fit: contain; background: #fafafa; padding: 15px; border: 2px dashed #eee; border-radius: 20px; }
         .btn-pill { border-radius: 50px; font-weight: 600; }
-        .header-section { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        
+        /* ปุ่มย้อนกลับมาตรฐาน (ตำแหน่งและขนาดเดียวกันทุกหน้า) */
+        .btn-back-standard {
+            width: 140px;
+            border-radius: 50px;
+            font-weight: 500;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
 
-<div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded-4 shadow-sm">
-        <h4 class="fw-bold text-warning mb-0">
-            <i class="bi bi-image me-2"></i>จัดการรูปภาพหน้าเว็บไซต์
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded-4 shadow-sm border-start border-primary border-5">
+        <h4 class="fw-bold text-primary mb-0">
+            <i class="bi bi-image-fill me-2"></i> จัดการรูปภาพและแบนเนอร์
         </h4>
-        <a href="index_ad.php" class="btn btn-secondary btn-sm rounded-pill px-4 shadow-sm">
-            ← กลับหน้าหลัก
+        <a href="index_ad.php" class="btn btn-secondary btn-sm btn-back-standard shadow-sm">
+            <i class="bi bi-arrow-left-circle me-1"></i> กลับหน้าหลัก
         </a>
     </div>
 
     <div class="row g-4">
         <?php 
-        // แก้ไขคีย์ของ Banner 2 จาก '---' ให้เป็น 'title' เพื่อแก้บัค Warning
         $sections = [
             1 => ['title' => 'Logo Shop', 'preview' => 'preview-logo'],
             2 => ['title' => 'Home Banner 1', 'preview' => 'preview-b1'],
@@ -63,13 +52,13 @@ while($row = mysqli_fetch_assoc($result)) {
             $display_img = $is_file_ready ? $file_path : "img_ad/default.png";
         ?>
         <div class="col-md-6 col-lg-3">
-            <div class="card card-custom p-3 text-center h-100 shadow-sm border-0" style="border-radius: 25px;">
+            <div class="card card-custom p-3 text-center h-100 shadow-sm border-0">
                 <div class="mb-2">
                     <span class="badge rounded-pill bg-warning text-dark px-3"><?= $info['title'] ?></span>
                 </div>
                 
                 <div class="my-3">
-                    <img id="<?= $info['preview'] ?>" src="<?= $display_img ?>?v=<?=time()?>" class="img-preview shadow-sm" style="height: 160px; width: 100%; object-fit: contain; background: #fafafa; border-radius: 20px; padding: 10px; border: 2px dashed #ffeeba;">
+                    <img id="<?= $info['preview'] ?>" src="<?= $display_img ?>?v=<?=time()?>" class="img-preview shadow-sm" style="border: 2px dashed #ffeeba;">
                 </div>
 
                 <div class="mb-3">

@@ -133,7 +133,7 @@ include '../config.php';
         <div class="welcome-section">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <h2 class="fw-bold mb-2">ยินดีต้อนรับ, คุณ <?php echo $_SESSION['fullname']; ?>! 👋</h2>
+                    <h2 class="fw-bold mb-2">ยินดีต้อนรับ,  <?php echo $_SESSION['fullname']; ?>! 👋</h2>
                     <p class="lead mb-0 opacity-75">จัดการร้าน TatoFun ของเราให้สนุกและเป็นระเบียบกันเถอะ</p>
                 </div>
                 <div class="col-md-4 text-md-end mt-3 mt-md-0">
@@ -187,7 +187,7 @@ include '../config.php';
         </div>
 
         <div class="text-center mt-5">
-            <p class="text-muted small">© 2026 TatoFun System - ความสุขคำโตๆ ในทุกคำที่ทอด</p>
+            <p class="text-muted small">© 2026 TatoFun System - อร่อยในทุกคำที่ได้ลอง</p>
         </div>
     </div>
 

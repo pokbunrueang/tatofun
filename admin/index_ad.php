@@ -103,7 +103,7 @@ $logo_path = (!empty($logo_row['name_lb'])) ? "img_ad/".$logo_row['name_lb'] : "
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 p-2">
                         <li>
                             <a class="dropdown-item py-2" href="../index.php">
-                                <i class="bi bi-shop me-2"></i>ไปหน้าร้านค้า
+                                <i class="bi bi-shop me-2 text-primary"></i>ไปหน้าร้านค้า
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>

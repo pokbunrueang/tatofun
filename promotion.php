@@ -99,14 +99,7 @@ include 'config.php'; // เชื่อมต่อฐานข้อมูล 
         ?>
     </div>
 </div>
-
-<div style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
-    <a href="cart.php" class="btn btn-dark rounded-pill py-2 px-4 shadow-lg border-2 border-warning">
-        <i class="bi bi-cart3 me-2"></i> ตะกร้าของฉัน 
-        <span class="badge bg-warning text-dark"><?= isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0 ?></span>
-    </a>
-</div>
-
+้
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
